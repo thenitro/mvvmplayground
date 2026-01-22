@@ -10,9 +10,21 @@ namespace Controllers
     {
         private readonly List<IDestroyableBinding> _bindingsToDestroy = new();
         
-        protected void Observe<T>(MVVM.Models.IObservable<T> observable, Action<T> onUpdate)
+        protected void Observe(IObservable observable, Action onNotify, bool updateImmediately = false) {
+            _bindingsToDestroy.Add(new ObservableBinding(observable, onNotify));
+
+            if (updateImmediately) {
+                onNotify?.Invoke();
+            }
+        }
+        
+        protected void Observe<T>(MVVM.Models.IObservable<T> observable, Action<T> onUpdate, bool updateImmediately = false)
         {
             _bindingsToDestroy.Add(new ObservableBinding<T>(observable, onUpdate));
+
+            if (updateImmediately) {
+                onUpdate?.Invoke((T)observable);
+            }
         }
         
         protected void Observe<T>(IObservableValue<T> observable, Action<T> onUpdate, bool updateImmediately = false)
@@ -57,18 +69,21 @@ namespace Controllers
                 Notify();
             }
         }
-
-        protected virtual void OnDestroyImplementation() { }
         
-        internal void OnDestroy()
-        {
+        protected virtual void OnDestroyImplementation() { }
+
+        protected void CleanupBindings() {
             foreach (var destroyableBinding in _bindingsToDestroy)
             {
                 destroyableBinding.OnDestroy();
             }
             
             _bindingsToDestroy.Clear();
-            
+        }
+        
+        protected void OnDestroy()
+        {
+            CleanupBindings();
             OnDestroyImplementation();
         }
     }

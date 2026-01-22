@@ -5,7 +5,7 @@ using MVVM.Views;
 namespace MVVM.Bindings.Base
 {
     public class ViewModelBinding<TView, TViewModel> : BaseValueBinding<TViewModel>
-        where TViewModel : BaseViewModel
+        where TViewModel : BaseViewModel<TViewModel>
         where TView : BaseView<TViewModel>
     {
         private readonly TView _view;
@@ -15,7 +15,7 @@ namespace MVVM.Bindings.Base
             _view = view;
         }
 
-        public ViewModelBinding(TView view, TViewModel value) : base(value)
+        public ViewModelBinding(TViewModel value, TView view) : base(value)
         {
             _view = view;
         }

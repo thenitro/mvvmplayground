@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MVVM.Models
 {
@@ -24,7 +25,7 @@ namespace MVVM.Models
             }
 
             _dict[key] = value;
-            _values.Setup(_dict.Values);
+            _values.Setup(_dict.Values.ToArray());
             NotifyObservers(key, value);
         }
 
@@ -34,7 +35,7 @@ namespace MVVM.Models
             set
             {
                 _dict[key] = value;
-                _values.Setup(_dict.Values);
+                _values.Setup(_dict.Values.ToArray());
                 NotifyObservers(key, value);
             }
         }
@@ -47,12 +48,20 @@ namespace MVVM.Models
             }
 
             _dict.Remove(key);
-            _values.Setup(_dict.Values);
+            _values.Setup(_dict.Values.ToArray());
 
             if (_observers.ContainsKey(key))
             {
                 NotifyObservers(_observers[key], key, default);
             }
+            
+            NotifyObservers(this);
+        }
+        
+        public void Clear() {
+            _observers.Clear();
+            _dict.Clear();
+            _values.Setup(Array.Empty<TValue>());
             
             NotifyObservers(this);
         }

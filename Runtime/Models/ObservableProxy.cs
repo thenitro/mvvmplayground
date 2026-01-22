@@ -20,6 +20,8 @@ namespace MVVM.Models
             Value?.RemoveObservation(OnValueUpdated);
             Value = value;
             Value?.Observe(OnValueUpdated);
+            
+            NotifyObservers(value);
         }
 
         private void OnValueUpdated(T obj)

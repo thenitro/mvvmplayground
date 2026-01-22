@@ -6,7 +6,7 @@ using UnityEngine;
 namespace MVVM.Views
 {
     public abstract class BaseView<TViewModel> : MonoBehaviour 
-        where TViewModel : BaseViewModel
+        where TViewModel : BaseViewModel<TViewModel>
     {
         public TViewModel ViewModel { get; private set; }
 
@@ -31,21 +31,21 @@ namespace MVVM.Views
         protected virtual void OnDisableImpl() { }
         protected virtual void OnDestroyImpl() { }
 
-        private void OnEnable()
+        protected void OnEnable()
         {
             _bindings.ForEach(b => b.OnEnable());
             ViewModel?.OnEnable();
             OnEnableImpl();
         }
 
-        private void OnDisable()
+        protected void OnDisable()
         {
             OnDisableImpl();
             _bindings.ForEach(b => b.OnDisable());
             ViewModel?.OnDisable();
         }
 
-        private void OnDestroy()
+        protected void OnDestroy()
         {
             OnDestroyImpl();
             DestroyViewModel();
@@ -61,7 +61,12 @@ namespace MVVM.Views
         protected void Bind(ILifecycleBinding valueBinding)
         {
             _bindings.Add(valueBinding);
-            valueBinding.OnEnable();
+            
+            if (isActiveAndEnabled) {
+                valueBinding.OnEnable();
+            } else {
+                valueBinding.OnDisable();
+            }
         }
     }
 }
