@@ -7,24 +7,34 @@ namespace MVVM.Models
 {
     public class ObservableDictionary<TKey, TValue> : BaseObservable<ObservableDictionary<TKey, TValue>>, IEnumerable<KeyValuePair<TKey, TValue>>
     {
-        public IEnumerable<TKey> Keys => _dict.Keys;
+        //TODO: observable HashSet
+        public IObservableValue<IEnumerable<TKey>> Keys => _keys;
+        private readonly ObservableValue<IEnumerable<TKey>> _keys = new();
+        
         public IObservableValue<IEnumerable<TValue>> Values => _values;
+        private readonly ObservableValue<IEnumerable<TValue>> _values = new();
+        
         public int Count => _dict.Count;
         
         private Dictionary<TKey, TValue> _dict = new();
         private Dictionary<TKey, HashSet<Action<TKey, TValue>>> _observers = new();
-
-        private readonly ObservableValue<IEnumerable<TValue>> _values = new();
         
         public void Add(TKey key, TValue value)
         {
-            var changed = !_dict.ContainsKey(key) || !_dict[key].Equals(value);
+            var hasKey = _dict.ContainsKey(key);
+            var changed = !hasKey || !_dict[key].Equals(value);
             if (!changed)
             {
                 return;
             }
 
             _dict[key] = value;
+
+            if (!hasKey)
+            {
+                _keys.Setup(_dict.Keys.ToArray());
+            }
+            
             _values.Setup(_dict.Values.ToArray());
             NotifyObservers(key, value);
         }
@@ -34,7 +44,15 @@ namespace MVVM.Models
             get => _dict[key];
             set
             {
+                var hasKey = _dict.ContainsKey(key);
+                
                 _dict[key] = value;
+                
+                if (!hasKey)
+                {
+                    _keys.Setup(_dict.Keys.ToArray());
+                }
+                
                 _values.Setup(_dict.Values.ToArray());
                 NotifyObservers(key, value);
             }
@@ -48,6 +66,8 @@ namespace MVVM.Models
             }
 
             _dict.Remove(key);
+            
+            _keys.Setup(_keys.Value.ToArray());
             _values.Setup(_dict.Values.ToArray());
 
             if (_observers.ContainsKey(key))

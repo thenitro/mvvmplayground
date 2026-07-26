@@ -4,9 +4,6 @@ using MVVM.Bindings.Base;
 
 namespace MVVM.Models
 {
-    public interface IDestructibleModel {
-        public void OnDestroy();
-    }
     
     public class ObservableModel<T> : BaseObservable<T>, IDestructibleModel
         where T : class
@@ -77,15 +74,20 @@ namespace MVVM.Models
                 Notify();
             }
         }
+        
+        protected void RemoveAllObservations()
+        {
+            foreach (var destroyableBinding in _bindingsToDestroy)
+            {
+                destroyableBinding.OnDestroy();
+            }
+            
+            _bindingsToDestroy.Clear();
+        }
 
         public void OnDestroy()
         {
-            foreach (var binding in _bindingsToDestroy)
-            {
-                binding.OnDestroy();
-            }
-            _bindingsToDestroy.Clear();
-            
+            RemoveAllObservations();
             ClearObservers();
             OnDestroyImplementation();
         }
